@@ -1,24 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import React from "react";
+import  ReactDOM from "react-dom";
+import './index.css';
 
-function Example() {
-  const [count, setCount] = useState(0);
-
-  // 相当于 componentDidMount 和 componentDidUpdate:
-  useEffect(() => {
-    // 使用浏览器的 API 更新页面标题
-    document.title = `You clicked ${count} times`;
-  });
-
+function Square (props) {
+    return (
+      <button className="square" onClick={props.onClick}>
+      {props.value}
+    </button>
+    );
+}
+function Replay (props) {
   return (
-    <div>
-      <p>You clicked {count} times</p>
-      <button onClick={() => setCount(count + 1)}>
-        Click me
-      </button>
-    </div>
+    <button onClick= {props.onClick}>
+      Replay
+    </button>
   );
 }
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+class Board extends React.Component {
+  renderSquare(i) {
+    return (
+      <Square
+        value={this.props.squares[i]}
+        onClick={() => this.props.onClick(i)}
+      />
+    );
+  }
+
+  render() {
+    
+    return (
+      <div>
+        <div className="status">{}</div>
+        <Replay onClick={()=>{this.props.replay()}}/>
+        <div className="board-row">
+          {this.renderSquare(0)}
+          {this.renderSquare(1)}
+          {this.renderSquare(2)}
+        </div>
+        <div className="board-row">
+          {this.renderSquare(3)}
+          {this.renderSquare(4)}
+          {this.renderSquare(5)}
+        </div>
+        <div className="board-row">
+          {this.renderSquare(6)}
+          {this.renderSquare(7)}
+          {this.renderSquare(8)}
+        </div>
+      </div>
+    );
+  }
+}
+
+class Game extends React.Component {
+  constructor(props){
+    super(props);
+    this.state ={
+      history:[{
+        squares: Array(9).fill(null),
+      }],
+      isNextX:true
+    }
+  }
+  handleReplay(){
+    this.setState({
+      history:[{
+        squares: Array(9).fill(null),
+      }],
+      isNextX:true})
+  }
+  handleClick(i){
+    const history = this.state.history;
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+    if (calculateWinner(squares) || squares[i]) {
+      return;
+    }
+    squares[i] = this.state.isNextX ? 'X' : 'O';
+    this.setState({
+      history: history.concat([{
+        squares: squares,
+      }]),
+      isNextX: !this.state.isNextX
+    });
+  }
+  componentDidUpdate(){
+    console.log(this.state);
+  }
+  render() {
+    const history = this.state.history;
+    const current = history[history.length - 1];
+    const winner = calculateWinner(current.squares);
+    let status;
+    if (winner) {
+      status = 'Winner: ' + winner;
+    } else {
+      status = 'Next player: ' + (this.state.isNextX ? 'X' : 'O');
+    }
+    return (
+      <div className="game">
+        <div className="game-board">
+          <Board replay={()=>{this.handleReplay()}} onClick={(i) => this.handleClick(i)} 
+          squares={current.squares} isNextX={this.state.isNextX}/>
+        </div>
+        <div className="game-info">
+          <div>{status}</div>
+          <ol>{/* TODO */}</ol>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ========================================
+
 ReactDOM.render(
-  <Example />,
+  <Game />,
   document.getElementById('root')
 );
